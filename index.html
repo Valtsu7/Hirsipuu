@@ -4,17 +4,113 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="style.css">
-    <title>Document</title>
+    <title>Game Portal</title>
 </head>
 <body>
-    <h3>Hangman</h3>
-    <form>
-        <label>Enter a letter or guess word</label>
-        <input/>
-    </form>
-    <p>Number of guesses <span></span></p> 
-    <p>Try to guess this word</p>
-    <output></output>
+    <div class="game-portal">
+        <header>
+            <h1>Game Portal</h1>
+        </header>
+        
+        <nav class="game-nav">
+            <button class="nav-btn active" data-game="hangman">Hangman</button>
+            <button class="nav-btn" data-game="memory">Memory</button>
+            <button class="nav-btn" data-game="reaction">Reaction</button>
+            <button class="nav-btn" data-game="number">Number Guess</button>
+            <button class="nav-btn" data-game="rps">Rock Paper Scissors</button>
+        </nav>
+
+        <!-- Hangman Game -->
+        <div id="hangman" class="game-container active">
+            <h2>Hangman</h2>
+            <form onsubmit="return false">
+                <label>Enter a letter or guess word</label>
+                <input/>
+            </form>
+            <button type="button" id="hintBtn">Get Hint (+2 guesses)</button>
+            <p>Number of guesses <span></span></p> 
+            <p>Try to guess this word</p>
+            <output></output>
+        </div>
+
+        <!-- Memory Game -->
+        <div id="memory" class="game-container">
+            <h2>Memory Game</h2>
+            <div class="memory-stats">
+                <p>Attempts: <span id="attempts">0</span></p>
+            </div>
+            <div id="memoryBoard" class="memory-board"></div>
+            <button id="resetMemory" type="button" class="reset-btn">Reset Game</button>
+        </div>
+
+        <!-- Reaction Game -->
+        <div id="reaction" class="game-container">
+            <h2>Reaction Game</h2>
+            <p id="reactionStatus">Click to start!</p>
+            <div id="reactionBox" class="reaction-box"></div>
+            <p id="reactionResult"></p>
+            <button id="reactionReset" type="button" class="reset-btn">Start Again</button>
+        </div>
+
+        <!-- Number Guess Game -->
+        <div id="number" class="game-container">
+            <h2>Number Guess</h2>
+            <p>Guess a number between 1 and 100</p>
+            <p id="numberFeedback"></p>
+            <form id="numberForm" onsubmit="return false">
+                <input id="numberInput" type="number" min="1" max="100" placeholder="Enter your guess">
+                <button type="button" class="submit-btn">Submit Guess</button>
+            </form>
+            <p id="numberAttempts">Attempts: <span id="attemptCount">0</span></p>
+            <button id="numberReset" type="button" class="reset-btn" style="display: none;">New Game</button>
+        </div>
+
+        <!-- Rock Paper Scissors Game -->
+        <div id="rps" class="game-container">
+            <h2>Rock Paper Scissors</h2>
+            <div class="rps-score">
+                <div class="score-item">
+                    <p>You</p>
+                    <p class="score" id="playerScore">0</p>
+                </div>
+                <div class="score-item">
+                    <p>Computer</p>
+                    <p class="score" id="computerScore">0</p>
+                </div>
+            </div>
+            <div id="rpsResult" class="rps-result"></div>
+            <div class="rps-choices">
+                <button type="button" class="choice-btn" data-choice="rock">🪨 Rock</button>
+                <button type="button" class="choice-btn" data-choice="paper">📄 Paper</button>
+                <button type="button" class="choice-btn" data-choice="scissors">✂️ Scissors</button>
+            </div>
+            <div class="rps-display">
+                <div class="player-choice">
+                    <p>Your choice:</p>
+                    <p id="playerChoice" class="choice-display">—</p>
+                </div>
+                <p class="vs">VS</p>
+                <div class="computer-choice">
+                    <p>Computer choice:</p>
+                    <p id="computerChoice" class="choice-display">—</p>
+                </div>
+            </div>
+            <button id="rpsReset" type="button" class="reset-btn">New Game</button>
+        </div>
+    </div>
+
+    <script src="memory.js"></script>
+    <script src="reaction.js"></script>
+    <script src="numbers.js"></script>
+    <script src="rps.js"></script>
     <script src="functions.js"></script>
+    
+    <script>
+        console.log('=== Testing HTML Load ===')
+        console.log('numberForm:', document.getElementById('numberForm'))
+        console.log('numberInput:', document.getElementById('numberInput'))
+        console.log('submitBtn:', document.querySelector('.submit-btn'))
+        console.log('=== All scripts loaded ===')
+    </script>
 </body>
 </html>
