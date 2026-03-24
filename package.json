@@ -7,11 +7,16 @@
     "test": "jest --runInBand"
   },
   "devDependencies": {
-    "jest": "29.7.0"
+    "jest": "29.7.0",
+    "jest-environment-jsdom": "^29.7.0"
   },
   "jest": {
     "testEnvironment": "jsdom",
-    "testMatch": ["**/__tests__/**/*.test.js"],
-    "roots": ["<rootDir>"]
+    "testMatch": [
+      "**/__tests__/**/*.test.js"
+    ],
+    "roots": [
+      "<rootDir>"
+    ]
   }
 }

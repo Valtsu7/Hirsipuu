@@ -71,6 +71,8 @@
         numberInput.focus()
     }
 
+    // MITÄ HELKKARIA sisii just ei 
+
     // Submit button listener
     const submitBtn = numberForm.querySelector('.submit-btn')
     console.log('Find submit button:', submitBtn)

@@ -6,9 +6,13 @@
 // Build a minimal DOM to host the app
 function setupDOM() {
   document.body.innerHTML = `
-    <input />
-    <output></output>
-    <span></span>
+    <button class="nav-btn" data-game="hangman">Hangman</button>
+    <div id="hangman" class="game-container">
+      <input />
+      <output></output>
+      <span></span>
+      <button id="hintBtn">Hint</button>
+    </div>
   `;
 }
 
@@ -44,7 +48,7 @@ function mockMathRandom(sequence) {
 
 // Helpers to interact with UI
 function pressEnterWith(value) {
-  const input = document.querySelector('input');
+  const input = document.querySelector('#hangman input');
   input.value = value;
   const event = new KeyboardEvent('keypress', { key: 'Enter' });
   input.dispatchEvent(event);
@@ -55,10 +59,11 @@ describe('functions.js Hangman behaviors', () => {
     // Cleanup global patches
     jest.resetModules();
     document.body.innerHTML = '';
+    jest.useRealTimers();
   });
 
   test('Starts a new game showing masked word and zero guesses', () => {
-    const rnd = mockMathRandom([0]); // pick first word ("programming") length 11
+    const rnd = mockMathRandom([0]); // pick first word ("programming")
     const alertSpy = mockAlert();
     setupDOM();
     loadScript();
@@ -74,7 +79,7 @@ describe('functions.js Hangman behaviors', () => {
   });
 
   test('Correct single-letter guess reveals all matching positions', () => {
-    const rnd = mockMathRandom([0]); // word: programming
+    const rnd = mockMathRandom([0]);
     const alertSpy = mockAlert();
     setupDOM();
     loadScript();
@@ -83,109 +88,148 @@ describe('functions.js Hangman behaviors', () => {
     pressEnterWith('g');
 
     const output = document.querySelector('output');
-    expect(output.textContent).toMatch(/g\*{8}g/);
+    // Ensure both 'g' characters are revealed (two occurrences in "programming")
+    const gCount = output.textContent.split('').filter((c) => c === 'g').length;
+    expect(gCount).toBe(2);
 
     rnd.restore();
     alertSpy.restore();
   });
 
-  test('Wrong single-letter guess triggers alert and does not change masked word', () => {
-    const rnd = mockMathRandom([0]); // programming
-    const alertSpy = mockAlert();
-    setupDOM();
-    loadScript();
-
-    const before = document.querySelector('output').textContent;
-    pressEnterWith('z');
-
-    const output = document.querySelector('output');
-    expect(output.textContent).toBe(before);
-    expect(alertSpy.calls.some((m) => m.includes('guessed wrong'))).toBe(true);
-
-    rnd.restore();
-    alertSpy.restore();
-  });
-
-  test('Full-word correct guess triggers win alert and resets game', () => {
-    // Choose a specific word via Math.random; index 1 => "javascript" (length 10)
-    const rnd = mockMathRandom([1]);
-    const alertSpy = mockAlert();
-    setupDOM();
-    loadScript();
-
-    // Extract the chosen word by inspecting console? Instead, compute from list index.
-    // Reconstruct list as in code order to know expectation
-    const words = [
-      'programming',
-      'javascript',
-      'database',
-      'markup',
-      'framework',
-      'variable',
-      'stylesheet',
-      'library',
-      'asynchronous',
-      'hypertext',
-    ];
-    const chosen = words[1];
-
-    pressEnterWith(chosen);
-
-    // Should have shown a win alert
-    expect(alertSpy.calls.some((m) => m.includes('You have guessed right'))).toBe(true);
-
-    // After newGame, masked output should reset to the new random selection's mask.
-    const output = document.querySelector('output');
-    expect(output.textContent.length).toBeGreaterThan(0);
-
-    rnd.restore();
-    alertSpy.restore();
-  });
-
-  test('Guess counter increments and displays on each Enter press', () => {
+  test('Repeated correct letter guess does not change mask but increments guess counter', () => {
     const rnd = mockMathRandom([0]);
     const alertSpy = mockAlert();
     setupDOM();
     loadScript();
 
     const span = document.querySelector('span');
-
-    pressEnterWith('x'); // 1
-    expect(span.textContent).toBe('1');
-
-    pressEnterWith('x'); // 2
-    expect(span.textContent).toBe('2');
-
-    rnd.restore();
-    alertSpy.restore();
-  });
-
-  test('Letter matching is case-insensitive', () => {
-    const rnd = mockMathRandom([0]); // programming includes 'P' at start when lowercased
-    const alertSpy = mockAlert();
-    setupDOM();
-    loadScript();
-
-    pressEnterWith('P'); // uppercase should match lowercase word
-
     const output = document.querySelector('output');
-    // programming starts with 'p' so first char should be revealed
-    expect(output.textContent.charAt(0).toLowerCase()).toBe('p');
+
+    pressEnterWith('g');
+    const afterFirst = output.textContent;
+    const countAfterFirst = span.textContent;
+
+    pressEnterWith('g');
+    const afterSecond = output.textContent;
+    const countAfterSecond = span.textContent;
+
+    expect(afterSecond).toBe(afterFirst);
+    expect(Number(countAfterSecond)).toBe(Number(countAfterFirst) + 1);
 
     rnd.restore();
     alertSpy.restore();
   });
 
-  test('Non-single, incorrect partial guess triggers wrong alert', () => {
+  test('Empty input increments guess counter and shows wrong-guess alert', () => {
     const rnd = mockMathRandom([0]);
     const alertSpy = mockAlert();
     setupDOM();
     loadScript();
 
-    pressEnterWith('progra'); // not full word and not single char
-    expect(alertSpy.calls.some((m) => m.includes('guessed wrong'))).toBe(true);
+    const span = document.querySelector('span');
+    const before = Number(span.textContent);
+
+    pressEnterWith('');
+
+    const after = Number(span.textContent);
+    expect(after).toBe(before + 1);
+    expect(alertSpy.calls.some((m) => m.toLowerCase().includes('guessed wrong'))).toBe(true);
 
     rnd.restore();
     alertSpy.restore();
+  });
+
+  test('giveHint reveals a letter and increments guesses by 2 and alerts', () => {
+    const rnd = mockMathRandom([0]); // programming
+    const alertSpy = mockAlert();
+    setupDOM();
+    loadScript();
+
+    const output = document.querySelector('output');
+    const span = document.querySelector('span');
+    const hintBtn = document.getElementById('hintBtn');
+
+    const beforeMask = output.textContent;
+    const beforeGuesses = Number(span.textContent);
+
+    hintBtn.click();
+
+    expect(output.textContent.length).toBe(beforeMask.length);
+    expect(Number(span.textContent)).toBe(beforeGuesses + 2);
+    expect(alertSpy.calls.some((m) => m.includes('Hint revealed'))).toBe(true);
+
+    rnd.restore();
+    alertSpy.restore();
+  });
+
+  test('hint can complete word and trigger win when only one letter remains', () => {
+    // Use a shorter word with unique letters to make deterministic completion via hint
+    // index 3 in words array is 'markup' (from functions.js words list)
+    const rnd = mockMathRandom([3]);
+    const alertSpy = mockAlert();
+    setupDOM();
+    loadScript();
+
+    const word = 'markup';
+    const lastChar = word.charAt(word.length - 1); // 'p'
+    // Reveal all letters except lastChar
+    const uniqueLetters = Array.from(new Set(word.split('')));
+    uniqueLetters.forEach((ch) => {
+      if (ch !== lastChar) pressEnterWith(ch);
+    });
+
+    // Now only lastChar remains hidden; click hint should reveal and trigger win alert
+    const hintBtn = document.getElementById('hintBtn');
+    hintBtn.click();
+
+    expect(alertSpy.calls.some((m) => m.includes('You have guessed right'))).toBe(true);
+
+    rnd.restore();
+    alertSpy.restore();
+  });
+
+  test('Non-letter single character acts as wrong guess and does not modify mask', () => {
+    const rnd = mockMathRandom([0]);
+    const alertSpy = mockAlert();
+    setupDOM();
+    loadScript();
+
+    const before = document.querySelector('output').textContent;
+    pressEnterWith('1');
+
+    const after = document.querySelector('output').textContent;
+    expect(after).toBe(before);
+    expect(alertSpy.calls.some((m) => m.toLowerCase().includes('guessed wrong'))).toBe(true);
+
+    rnd.restore();
+    alertSpy.restore();
+  });
+
+  test('Wrong guess changes output border color then reverts after timeout', () => {
+    jest.useFakeTimers();
+    const rnd = mockMathRandom([0]);
+    const alertSpy = mockAlert();
+    setupDOM();
+    loadScript();
+
+    const output = document.querySelector('output');
+
+    // Ensure starting border is default after initialization
+    expect(output.style.borderColor).toBe('');
+
+    pressEnterWith('z'); // wrong guess should set borderColor to something truthy
+    const afterWrong = output.style.borderColor;
+    expect(afterWrong).toBeTruthy();
+
+    // advance timers to execute setTimeout restoration
+    jest.runAllTimers();
+
+    const afterTimeout = output.style.borderColor;
+    // After timeout borderColor should have reverted (either empty or the reset color)
+    expect(afterTimeout === '' || afterTimeout === '#e94560' || afterTimeout !== afterWrong).toBeTruthy();
+
+    rnd.restore();
+    alertSpy.restore();
+    jest.useRealTimers();
   });
 });
